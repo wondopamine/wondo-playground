@@ -207,6 +207,34 @@
             box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
         }
 
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
         @media (max-width: 968px) {
             .container {
                 flex-direction: column;
@@ -295,9 +323,22 @@
                 </div>
             </div>
 
+            <div class="control-group">
+                <label>
+                    Animation Speed
+                    <span class="value-display" id="animSpeedValue">50</span>
+                </label>
+                <input type="range" id="animSpeed" min="10" max="100" value="50" step="10">
+            </div>
+
             <div class="button-group">
                 <button class="btn-secondary" id="randomizeBtn">Randomize</button>
                 <button class="btn-primary" id="regenerateBtn">Regenerate</button>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-warning" id="animateBtn">Animate Drawing</button>
+                <button class="btn-danger" id="stopAnimBtn" style="display: none;">Stop</button>
             </div>
 
             <div class="button-group">
@@ -322,9 +363,13 @@
                     strokeColor: '#c0392b',
                     strokeWidth: 2,
                     displayMode: 'filled',
-                    showCenter: false
+                    showCenter: false,
+                    animSpeed: 50
                 };
                 this.points = [];
+                this.isAnimating = false;
+                this.animationId = null;
+                this.animationProgress = 0;
             }
 
             // Generate classic astroid curve (x = a*cos³(t), y = a*sin³(t))
@@ -474,6 +519,93 @@
                 this.ctx.restore();
             }
 
+            drawAnimated(progress) {
+                // Clear canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                if (this.points.length === 0) return;
+
+                const numPointsToDraw = Math.floor(this.points.length * progress);
+
+                if (numPointsToDraw < 1) return;
+
+                this.ctx.save();
+                this.ctx.translate(this.centerX, this.centerY);
+
+                // Draw the progressive path
+                this.ctx.beginPath();
+                this.ctx.moveTo(this.points[0].x, this.points[0].y);
+
+                for (let i = 1; i < numPointsToDraw; i++) {
+                    this.ctx.lineTo(this.points[i].x, this.points[i].y);
+                }
+
+                // Only stroke during animation (no fill until complete)
+                this.ctx.strokeStyle = this.config.strokeColor;
+                this.ctx.lineWidth = this.config.strokeWidth;
+                this.ctx.lineCap = 'round';
+                this.ctx.lineJoin = 'round';
+                this.ctx.stroke();
+
+                // Draw current point
+                this.ctx.fillStyle = this.config.strokeColor;
+                this.ctx.beginPath();
+                const currentPoint = this.points[numPointsToDraw - 1];
+                this.ctx.arc(currentPoint.x, currentPoint.y, this.config.strokeWidth * 2, 0, 2 * Math.PI);
+                this.ctx.fill();
+
+                // Show center point
+                if (this.config.showCenter) {
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+                    this.ctx.fill();
+                }
+
+                this.ctx.restore();
+            }
+
+            startAnimation(onComplete) {
+                if (this.isAnimating) return;
+
+                this.isAnimating = true;
+                this.animationProgress = 0;
+
+                const animate = () => {
+                    if (!this.isAnimating) return;
+
+                    // Calculate progress increment based on speed (10-100 maps to slower-faster)
+                    const increment = this.config.animSpeed / 10000;
+                    this.animationProgress += increment;
+
+                    if (this.animationProgress >= 1) {
+                        this.animationProgress = 1;
+                        this.drawAnimated(this.animationProgress);
+                        this.stopAnimation();
+                        // Draw final version with fill
+                        setTimeout(() => {
+                            this.draw();
+                            if (onComplete) onComplete();
+                        }, 200);
+                        return;
+                    }
+
+                    this.drawAnimated(this.animationProgress);
+                    this.animationId = requestAnimationFrame(animate);
+                };
+
+                this.animationId = requestAnimationFrame(animate);
+            }
+
+            stopAnimation() {
+                this.isAnimating = false;
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+                this.animationProgress = 0;
+            }
+
             generateSVG() {
                 if (this.points.length === 0) return '';
 
@@ -532,7 +664,8 @@
             strokeColor: document.getElementById('strokeColor'),
             strokeWidth: document.getElementById('strokeWidth'),
             displayMode: document.getElementById('displayMode'),
-            showCenter: document.getElementById('showCenter')
+            showCenter: document.getElementById('showCenter'),
+            animSpeed: document.getElementById('animSpeed')
         };
 
         // Value displays
@@ -540,8 +673,13 @@
             sharpness: document.getElementById('sharpnessValue'),
             size: document.getElementById('sizeValue'),
             randomness: document.getElementById('randomnessValue'),
-            strokeWidth: document.getElementById('strokeWidthValue')
+            strokeWidth: document.getElementById('strokeWidthValue'),
+            animSpeed: document.getElementById('animSpeedValue')
         };
+
+        // Button references
+        const animateBtn = document.getElementById('animateBtn');
+        const stopAnimBtn = document.getElementById('stopAnimBtn');
 
         // Update handlers
         controls.curveType.addEventListener('change', (e) => {
@@ -588,9 +726,33 @@
             generator.updateConfig('showCenter', e.target.checked);
         });
 
+        controls.animSpeed.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            displays.animSpeed.textContent = value;
+            generator.updateConfig('animSpeed', value);
+        });
+
         // Buttons
         document.getElementById('regenerateBtn').addEventListener('click', () => {
             generator.update();
+        });
+
+        animateBtn.addEventListener('click', () => {
+            generator.generate(); // Generate fresh curve
+            generator.startAnimation(() => {
+                // Animation complete callback
+                animateBtn.style.display = 'block';
+                stopAnimBtn.style.display = 'none';
+            });
+            animateBtn.style.display = 'none';
+            stopAnimBtn.style.display = 'block';
+        });
+
+        stopAnimBtn.addEventListener('click', () => {
+            generator.stopAnimation();
+            generator.draw();
+            animateBtn.style.display = 'block';
+            stopAnimBtn.style.display = 'none';
         });
 
         document.getElementById('randomizeBtn').addEventListener('click', () => {
