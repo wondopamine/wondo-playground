@@ -1,0 +1,37 @@
+// Radix Colors for accessibility
+export const radixColors = {
+  tomato: { name: 'Tomato', value: '#E54D2E', hover: '#DD4425' },
+  red: { name: 'Red', value: '#E5484D', hover: '#DC3D43' },
+  ruby: { name: 'Ruby', value: '#E54666', hover: '#DC3A5C' },
+  crimson: { name: 'Crimson', value: '#E93D82', hover: '#E03177' },
+  pink: { name: 'Pink', value: '#D6409F', hover: '#CD3897' },
+  plum: { name: 'Plum', value: '#AB4ABA', hover: '#A43FB1' },
+  purple: { name: 'Purple', value: '#8E4EC6', hover: '#8445BC' },
+  violet: { name: 'Violet', value: '#6E56CF', hover: '#654DC4' },
+  iris: { name: 'Iris', value: '#5B5BD6', hover: '#5151CD' },
+  indigo: { name: 'Indigo', value: '#3E63DD', hover: '#3358D4' },
+  blue: { name: 'Blue', value: '#0090FF', hover: '#0588F0' },
+  cyan: { name: 'Cyan', value: '#00A2C7', hover: '#0797B9' },
+  teal: { name: 'Teal', value: '#12A594', hover: '#0D9B8A' },
+  jade: { name: 'Jade', value: '#29A383', hover: '#27A07B' },
+  green: { name: 'Green', value: '#30A46C', hover: '#2B9A66' },
+  grass: { name: 'Grass', value: '#46A758', hover: '#3E9B4F' },
+  orange: { name: 'Orange', value: '#F76B15', hover: '#ED6007' },
+  brown: { name: 'Brown', value: '#AD5700', hover: '#A35200' },
+  sky: { name: 'Sky', value: '#7CE2FE', hover: '#74DAF8' },
+  mint: { name: 'Mint', value: '#86EAD4', hover: '#7DE0CB' },
+  lime: { name: 'Lime', value: '#B4D748', hover: '#AACE34' },
+  yellow: { name: 'Yellow', value: '#FFE629', hover: '#FFDC00' },
+  amber: { name: 'Amber', value: '#FFC53D', hover: '#FFBA26' },
+  gold: { name: 'Gold', value: '#F5C23C', hover: '#F1B925' },
+  bronze: { name: 'Bronze', value: '#E9A94C', hover: '#E39F3A' },
+  gray: { name: 'Gray', value: '#8B8D98', hover: '#80828D' },
+  mauve: { name: 'Mauve', value: '#8E8C99', hover: '#83818E' },
+  slate: { name: 'Slate', value: '#8B8D98', hover: '#80828D' },
+  sage: { name: 'Sage', value: '#868E96', hover: '#7C848C' },
+  olive: { name: 'Olive', value: '#8C8E81', hover: '#82847A' },
+  sand: { name: 'Sand', value: '#908E88', hover: '#86857E' },
+}
+
+export const getRadixColorKeys = () => Object.keys(radixColors)
+export const getRadixColor = (key) => radixColors[key] || radixColors.blue
